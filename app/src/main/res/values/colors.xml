@@ -3,4 +3,8 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="bgGreen">#2ef90a</color>
+    <color name="askBtnBg">#0ae9f9</color>
+    <color name="answBtnBg">#4796cb</color>
+    <color name="bgGrey">#b3b0b9</color>
 </resources>
