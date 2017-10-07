@@ -1,6 +1,7 @@
 package com.app.worte.worte;
 
 import android.content.Context;
+import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,7 +10,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
+
+import java.util.List;
+import java.util.Random;
 
 public class WorteMain extends AppCompatActivity implements View.OnClickListener
 {
@@ -78,6 +81,8 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
     @Override
     public void onClick(View v)
     {
+        implementBigButtonClick();
+        
         switch (v.getId())
         {
             case R.id.askButton:
@@ -99,5 +104,29 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
                 Log.w(LOG_TAG, "Inknown button selected!");
                 break;
         }
+    }
+
+    private void implementBigButtonClick()
+    {
+        FileSystemOperator fsOperator = new FileSystemOperator();
+        List<Pair<String, String>> dict = fsOperator.getWholeDictionary();
+
+        int dictSize = dict.size();
+        Log.i(LOG_TAG, "Size of received dict = " + String.valueOf(dictSize));
+
+        Random r = new Random();
+
+        int ackInd = r.nextInt(dictSize);
+
+        int wrongAnsw1Ind = r.nextInt(dictSize);
+        int wrongAnsw2Ind = r.nextInt(dictSize);
+        int wrongAnsw3Ind = r.nextInt(dictSize);
+
+        btnAsk.setText(dict.get(ackInd).first);
+
+        btnAnsw1.setText(dict.get(ackInd).second);
+        btnAnsw2.setText(dict.get(wrongAnsw1Ind).second);
+        btnAnsw3.setText(dict.get(wrongAnsw2Ind).second);
+        btnAnsw4.setText(dict.get(wrongAnsw3Ind).second);
     }
 }
