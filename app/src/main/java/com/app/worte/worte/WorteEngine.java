@@ -30,6 +30,10 @@ public class WorteEngine
 
     private int correctAnswerId;
 
+    private FileSystemOperator fsOperator;
+    private List<Pair<String, String>> dict;
+    private int dictSize;
+
     private void setAnswById(int id, String answer)
     {
         switch(id)
@@ -52,15 +56,19 @@ public class WorteEngine
         }
     }
 
+    public WorteEngine()
+    {
+        fsOperator = new FileSystemOperator();
+        dict = fsOperator.getWholeDictionary();
+
+        dictSize = dict.size();
+
+        Log.i(LOG_TAG, "Size of received dict = " + String.valueOf(dictSize));
+    }
+
     public void generateNextQuestion()
     {
         isQuestionGenerated = true;
-
-        FileSystemOperator fsOperator = new FileSystemOperator();
-        List<Pair<String, String>> dict = fsOperator.getWholeDictionary();
-
-        int dictSize = dict.size();
-        Log.i(LOG_TAG, "Size of received dict = " + String.valueOf(dictSize));
 
         Random r = new Random(System.currentTimeMillis());
 
