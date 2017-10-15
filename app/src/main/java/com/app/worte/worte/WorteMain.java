@@ -12,7 +12,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
-
 public class WorteMain extends AppCompatActivity implements View.OnClickListener
 {
     Context context;
@@ -58,7 +57,7 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         btnAnsw4.setOnClickListener(this);
         mainLayout.setOnClickListener(this);
 
-        UpdateActivityForNewAnswer();
+        nextQuestion();
     }
 
     // Initiating Menu XML file (menu.xml)
@@ -75,16 +74,21 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
     {
         switch (item.getItemId())
         {
-            case R.id.menu_chosedb:
+            case R.id.menu_prev:
+                Log.i(LOG_TAG, "Previous question is Selected");
+                previousQuestion();
+                return true;
+            case R.id.menu_next:
+                Log.i(LOG_TAG, "Next question is Selected");
+                nextQuestion();
+                return true;
+            case R.id.menu_choosedb:
                 Log.i(LOG_TAG, "Choose Data Base is Selected");
+                // TODO: Implement
                 return true;
-
-            case R.id.menu_settings:
-                Log.i(LOG_TAG, "Settings is Selected");
-                return true;
-
             case R.id.menu_quit:
                 Log.i(LOG_TAG, "Quit is Selected");
+                this.finish();
                 return true;
 
             default:
@@ -103,7 +107,7 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         {
             if (isAnsweringEnabled == false)
             {
-                UpdateActivityForNewAnswer();
+                nextQuestion();
             }
             else
             {
@@ -188,11 +192,21 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         }
     }
 
+    private void nextQuestion()
+    {
+        wEngine.moveToNextQuestion();
+        UpdateActivityForNewAnswer();
+    }
+
+    private void previousQuestion()
+    {
+        wEngine.moveToPreviousQuestion();
+        UpdateActivityForNewAnswer();
+    }
+
     private void UpdateActivityForNewAnswer()
     {
         isAnsweringEnabled = true;
-
-        wEngine.generateNextQuestion();
 
         btnAsk.setBackground(ContextCompat.getDrawable(context, R.drawable.ask_btn_def));
 

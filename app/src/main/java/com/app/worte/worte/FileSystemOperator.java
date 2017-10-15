@@ -13,7 +13,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class FileSystemOperator
 {
     private WorteDefDb defDb;
@@ -52,7 +51,6 @@ public class FileSystemOperator
                     Log.w(LOG_TAG, "Found not DB line: " + line);
                 }
 
-                Log.d("Line:", line);
                 line = reader.readLine();
             }
         }
@@ -86,7 +84,7 @@ public class FileSystemOperator
         if(isDbFolderCreated == false)
         {
             dict = defDb.getDefaultDictionary();
-            Log.e(LOG_TAG, "Cannot create worte database folder");
+            Log.e(LOG_TAG, "Worte DB doesn't exists and unable to create new one");
         }
         else
         {
