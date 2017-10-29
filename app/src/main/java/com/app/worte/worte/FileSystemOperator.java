@@ -15,15 +15,14 @@ import java.util.List;
 
 public class FileSystemOperator
 {
-    private WorteDefDb defDb;
-
     private List<String> dbFilesList;
-    private List<Pair<String, String>> dict;
+    private List<Pair<String, String>> finalDict;
 
     private static final String LOG_TAG = "FileSystemOperator";
     private static final String WORTE_FOLDER = "/WorteDb";
 
-    private final int MIN_DICT_SIZE = 4;
+    private File[] dbFiles;
+    private File worteDbFolder;
 
     private void parseDbFile(File dbFile)
     {
@@ -44,7 +43,7 @@ public class FileSystemOperator
                     String newLanguage = splited[0];
                     String nativeLanguage = splited[1];
 
-                    dict.add(Pair.create(newLanguage, nativeLanguage));
+                    finalDict.add(Pair.create(newLanguage, nativeLanguage));
                 }
                 else
                 {
@@ -67,13 +66,13 @@ public class FileSystemOperator
 
     public FileSystemOperator()
     {
-        defDb = new WorteDefDb();
         dbFilesList = new ArrayList<>();
+        finalDict = new ArrayList<Pair<String, String>>();
 
         String dbDirName = Environment.getExternalStorageDirectory().toString() + WORTE_FOLDER;
         Log.i(LOG_TAG, "DB path " + dbDirName);
 
-        File worteDbFolder = new File(dbDirName);
+        worteDbFolder = new File(dbDirName);
         boolean isDbFolderCreated = true;
 
         if (!worteDbFolder.exists())
@@ -83,45 +82,48 @@ public class FileSystemOperator
 
         if(isDbFolderCreated == false)
         {
-            dict = defDb.getDefaultDictionary();
             Log.e(LOG_TAG, "Worte DB doesn't exists and unable to create new one");
         }
         else
         {
-            dict = new ArrayList<Pair<String, String>>();
+            dbFiles = worteDbFolder.listFiles();
 
-            File[] dbFiles = worteDbFolder.listFiles();
-            int dbFilesNum = dbFiles.length;
-
-            if(dbFilesNum == 0)
+            for (File file : dbFiles)
             {
-                dict = defDb.getDefaultDictionary();
-                Log.i(LOG_TAG, "DB folder is empty, getting default dictionary");
-            }
-            else
-            {
-                for (int i = 0; i < dbFilesNum; i++)
-                {
-                    String fileName = dbFiles[i].getName();
-                    dbFilesList.add(fileName);
-                    Log.i(LOG_TAG, "Found DB file: " + fileName);
-                    parseDbFile(dbFiles[i]);
-                }
-            }
-            if(dict.size() < MIN_DICT_SIZE)
-            {
-                // TODO: add default dictionary
+                dbFilesList.add(file.getName());
             }
         }
     }
 
-    public List<String>  getDbNamesList()
+    public List<String> getDbNamesList()
     {
         return dbFilesList;
     }
 
-    public List<Pair<String, String>> getWholeDictionary()
+    public List<Pair<String, String>> getDictByDbNames(List<String> dbNames)
     {
-        return dict;
+        finalDict.clear();
+
+        for (File file : dbFiles)
+        {
+            if( dbNames.contains(file.getName()) )
+            {
+                parseDbFile(file);
+                Log.i(LOG_TAG, "Added file to DB: " + file.getName());
+            }
+        }
+
+        return finalDict;
+    }
+
+    public List<Pair<String, String>> getAllDictionaries()
+    {
+        for (File file : dbFiles)
+        {
+            parseDbFile(file);
+            Log.i(LOG_TAG, "Added file to DB: " + file.getName());
+        }
+
+        return finalDict;
     }
 }

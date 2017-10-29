@@ -66,6 +66,9 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
     {
         MenuInflater menuInflater = getMenuInflater();
         menuInflater.inflate(R.menu.menu, menu);
+
+        menu.getItem(2).setEnabled(false);
+
         return true;
     }
 
