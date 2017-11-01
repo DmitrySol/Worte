@@ -1,6 +1,7 @@
 package com.app.worte.worte;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -67,8 +68,6 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         MenuInflater menuInflater = getMenuInflater();
         menuInflater.inflate(R.menu.menu, menu);
 
-        menu.getItem(2).setEnabled(false);
-
         return true;
     }
 
@@ -87,8 +86,12 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
                 return true;
             case R.id.menu_choosedb:
                 Log.i(LOG_TAG, "Choose Data Base is Selected");
-                // TODO: Implement
+
+                Intent dbListActivity = new Intent(WorteMain.this, DbListActivity.class);
+                startActivity(dbListActivity);
+
                 return true;
+
             case R.id.menu_quit:
                 Log.i(LOG_TAG, "Quit is Selected");
                 this.finish();
