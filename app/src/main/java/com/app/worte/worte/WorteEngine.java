@@ -4,8 +4,10 @@ import android.support.v4.util.Pair;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.Vector;
 
 class WorteTypeId
 {
@@ -108,8 +110,6 @@ class WorteUnit
 public class WorteEngine
 {
     private final String LOG_TAG = "WorteEngine";
-//    private final int MIN_DICT_SIZE = 4;
-
     private boolean isQuestionGenerated = false;
 
     private FileSystemOperator fsOperator;
@@ -121,17 +121,14 @@ public class WorteEngine
 
     private int currentWorteUnitId;
 
+    private Boolean[] isShown;
+    private int shownNum;
+
     public WorteEngine(List<String> preferedDbList)
     {
         fsOperator = new FileSystemOperator();
 
         dict = fsOperator.getDictByDbNames(preferedDbList);
-
-//        if (dict.size() < MIN_DICT_SIZE)
-//        {
-//            dict = new WorteDefDb().getDefaultDictionary();
-//            Log.w(LOG_TAG, "Database is empty, taken default");
-//        }
 
         dictSize = dict.size();
 
@@ -139,7 +136,104 @@ public class WorteEngine
         currentWorteUnit = new WorteUnit();
         currentWorteUnitId = -1;
 
+        shownNum = 0;
+        isShown = new Boolean[dictSize];
+        Arrays.fill(isShown, Boolean.FALSE);
+
         Log.i(LOG_TAG, "Size of received dict = " + String.valueOf(dictSize));
+    }
+
+    private int generateAskIndex()
+    {
+        int askIndex = 0;
+
+        if(shownNum == dictSize)
+        {
+            Arrays.fill(isShown, Boolean.FALSE);
+            shownNum = 0;
+        }
+
+        Random r = new Random(System.currentTimeMillis());
+
+        int preAskInd = r.nextInt(dictSize);
+
+        boolean isFoundFreeSpace = false;
+
+        for(int i = 0; i < dictSize; i++)
+        {
+            int rightInd = preAskInd + i;
+            int leftInd = preAskInd - i;
+
+            if((rightInd < dictSize) && (isShown[rightInd] == false))
+            {
+                askIndex = rightInd;
+                isFoundFreeSpace = true;
+                break;
+            }
+
+            if((leftInd >= 0) && (isShown[leftInd] == false))
+            {
+                askIndex = leftInd;
+                isFoundFreeSpace = true;
+                break;
+            }
+        }
+
+        if(isFoundFreeSpace == false)
+        {
+            Log.e(LOG_TAG, "Something went wrong!");
+            askIndex = preAskInd;
+        }
+
+        isShown[askIndex] = true;
+        ++shownNum;
+
+        return askIndex;
+    }
+
+    private int generateWrongAnswerId(Vector<Integer> occupiedIndexes)
+    {
+        int answerId = 0;
+
+        Vector<String> occupiedAnswers = new Vector<String>();
+
+        for(int index: occupiedIndexes)
+        {
+            occupiedAnswers.add(dict.get(index).second);
+        }
+
+        Random r = new Random(System.currentTimeMillis());
+        int preAnswer = r.nextInt(dictSize);
+
+        boolean isFoundPropperIndex = false;
+        for(int i = 0; i < dictSize; i++)
+        {
+            int rightInd = preAnswer + i;
+            int leftInd = preAnswer - i;
+
+            if((rightInd < dictSize) && (!occupiedIndexes.contains(rightInd)) &&
+                    (!occupiedAnswers.contains(dict.get(rightInd).second)))
+            {
+                answerId = rightInd;
+                isFoundPropperIndex = true;
+                break;
+            }
+            if((leftInd >= 0) && (!occupiedIndexes.contains(leftInd)) &&
+                    (!occupiedAnswers.contains(dict.get(leftInd).second)))
+            {
+                answerId = leftInd;
+                isFoundPropperIndex = true;
+                break;
+            }
+        }
+
+        if(isFoundPropperIndex == false)
+        {
+            Log.e(LOG_TAG, "Unable to find unique answer!");
+            answerId = preAnswer;
+        }
+
+        return answerId;
     }
 
     private void generateNewWorteUnit()
@@ -150,10 +244,13 @@ public class WorteEngine
 
         Random r = new Random(System.currentTimeMillis());
 
-        int ackInd = r.nextInt(dictSize);
+        int ackInd = generateAskIndex();
 
         tempWorteUnit.setUnitById(dict.get(ackInd).first, WorteTypeId.QUESTION);
         tempWorteUnit.setCorrectAnswerId(r.nextInt(WorteTypeId.ANS_4) + 1);
+
+        Vector<Integer> occupiedIndexes = new Vector<Integer>();
+        occupiedIndexes.add(ackInd);
 
         for(int i = WorteTypeId.ANS_1; i <= WorteTypeId.ANS_4; i++)
         {
@@ -163,7 +260,9 @@ public class WorteEngine
             }
             else
             {
-                tempWorteUnit.setUnitById(dict.get(r.nextInt(dictSize)).second, i);
+                int curWrongAnswerId = generateWrongAnswerId(occupiedIndexes);
+                occupiedIndexes.add(curWrongAnswerId);
+                tempWorteUnit.setUnitById(dict.get(curWrongAnswerId).second, i);
             }
         }
 
