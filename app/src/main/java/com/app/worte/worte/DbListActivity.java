@@ -2,6 +2,7 @@ package com.app.worte.worte;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -53,11 +54,13 @@ class RawStatus
 
 public class DbListActivity extends AppCompatActivity
 {
+    private final String LOG_TAG = "DbListActivity";
+
     private ListView worteDbList;
-
     private List<String> availableDb;
+    private ArrayList<RawStatus> rawStatuses;
 
-    private ArrayList<RawStatus> rawStatus;
+    WortePreferences wortePref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -66,19 +69,48 @@ public class DbListActivity extends AppCompatActivity
         setContentView(R.layout.activity_db_list);
 
         availableDb = new FileSystemOperator().getDbNamesList();
-
         worteDbList = (ListView) findViewById(R.id.llChb);
+        rawStatuses = new ArrayList<RawStatus>();
 
-        rawStatus = new ArrayList<RawStatus>();
+        wortePref = new WortePreferences(getApplicationContext());
+        List<String> chosenDbNamesList = wortePref.getChoosenDbList();
 
-        // TODO: Make Init from persistency
         for (int i = 0; i < availableDb.size(); i++)
         {
-            rawStatus.add(new RawStatus(i, false, availableDb.get(i)));
+            String currentDbName = availableDb.get(i);
+            boolean isDbChoosen = false;
+
+            if ((chosenDbNamesList != null) && (chosenDbNamesList.contains(currentDbName)))
+            {
+                isDbChoosen = true;
+                Log.i(LOG_TAG, "DB: " + currentDbName + " is choosen");
+            }
+
+            rawStatuses.add(new RawStatus(i, isDbChoosen, currentDbName));
         }
 
         worteDbList.invalidate();
         worteDbList.setAdapter(new WorteDbAdapter());
+    }
+
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+
+        String choosenDbString = "";
+
+        for(RawStatus rawStatus : rawStatuses)
+        {
+            if(rawStatus.isSelected())
+            {
+                choosenDbString += rawStatus.getName();
+                choosenDbString += "%";
+            }
+        }
+
+        wortePref.saveChoosenDbList(choosenDbString);
+        Log.i(LOG_TAG, "Saved WDB list: " + choosenDbString);
     }
 
 
@@ -117,18 +149,18 @@ public class DbListActivity extends AppCompatActivity
                 @Override
                 public void onClick(View v)
                 {
-                    if (rawStatus.get(position).isSelected())
+                    if (rawStatuses.get(position).isSelected())
                     {
-                        rawStatus.get(position).unselect();
+                        rawStatuses.get(position).unselect();
                     }
                     else
                     {
-                        rawStatus.get(position).select();
+                        rawStatuses.get(position).select();
                     }
                 }
             });
 
-            if (rawStatus.get(position).isSelected())
+            if (rawStatuses.get(position).isSelected())
             {
                 cb.setChecked(true);
             }

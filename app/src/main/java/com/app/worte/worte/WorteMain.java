@@ -13,6 +13,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
+import java.util.List;
+
 public class WorteMain extends AppCompatActivity implements View.OnClickListener
 {
     Context context;
@@ -27,7 +29,12 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
 
     ConstraintLayout mainLayout;
 
-    static String LOG_TAG = "WorteMain";
+    WortePreferences wPref;
+    List<String> lastPrefList;
+
+    final static String LOG_TAG = "WorteMain";
+
+    private final int MIN_DICT_SIZE = 4;
 
     boolean isAnsweringEnabled;
 
@@ -38,8 +45,6 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         setContentView(R.layout.activity_worte_main);
 
         context = getApplicationContext();
-
-        wEngine = new WorteEngine();
 
         btnAsk = (Button) findViewById(R.id.askButton);
 
@@ -58,7 +63,90 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         btnAnsw4.setOnClickListener(this);
         mainLayout.setOnClickListener(this);
 
-        nextQuestion();
+        wPref = new WortePreferences(context);
+        lastPrefList = wPref.getChoosenDbList();
+
+        if(lastPrefList != null)
+        {
+            wEngine = new WorteEngine(lastPrefList);
+
+            if(wEngine.getDictSize() == 0)
+            {
+                showWorteProblem("DB is Empty!");
+            }
+            else if(wEngine.getDictSize() < MIN_DICT_SIZE)
+            {
+                showWorteProblem("DB is too small to show!");
+            }
+            else
+            {
+                nextQuestion();
+            }
+        }
+        else
+        {
+            showWorteProblem("No DB selected!");
+        }
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+
+        List<String> curPrefList = wPref.getChoosenDbList();
+
+        if(curPrefList != null)
+        {
+            if (!curPrefList.equals(lastPrefList))
+            {
+                wEngine = new WorteEngine(curPrefList);
+
+                if(wEngine.getDictSize() == 0)
+                {
+                    showWorteProblem("DB is Empty!");
+                }
+                else if(wEngine.getDictSize() < MIN_DICT_SIZE)
+                {
+                    showWorteProblem("DB is too small to show!");
+                }
+                else
+                {
+                    lastPrefList = curPrefList;
+                    nextQuestion();
+                }
+            }
+        }
+        else
+        {
+            showWorteProblem("No DB selected!");
+        }
+    }
+
+    private void showWorteProblem(String problem)
+    {
+        btnAsk.setText(problem);
+        btnAnsw1.setText("-");
+        btnAnsw2.setText("-");
+        btnAnsw3.setText("-");
+        btnAnsw4.setText("-");
+
+        btnAsk.setEnabled(false);
+        btnAnsw1.setEnabled(false);
+        btnAnsw2.setEnabled(false);
+        btnAnsw3.setEnabled(false);
+        btnAnsw4.setEnabled(false);
+        mainLayout.setEnabled(false);
+    }
+
+    private void enableAllButtons()
+    {
+        btnAsk.setEnabled(true);
+        btnAnsw1.setEnabled(true);
+        btnAnsw2.setEnabled(true);
+        btnAnsw3.setEnabled(true);
+        btnAnsw4.setEnabled(true);
+        mainLayout.setEnabled(true);
     }
 
     // Initiating Menu XML file (menu.xml)
@@ -212,6 +300,7 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
 
     private void UpdateActivityForNewAnswer()
     {
+        enableAllButtons();
         isAnsweringEnabled = true;
 
         btnAsk.setBackground(ContextCompat.getDrawable(context, R.drawable.ask_btn_def));

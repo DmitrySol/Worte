@@ -108,7 +108,7 @@ class WorteUnit
 public class WorteEngine
 {
     private final String LOG_TAG = "WorteEngine";
-    private final int MIN_DICT_SIZE = 4;
+//    private final int MIN_DICT_SIZE = 4;
 
     private boolean isQuestionGenerated = false;
 
@@ -121,20 +121,17 @@ public class WorteEngine
 
     private int currentWorteUnitId;
 
-    public WorteEngine()
+    public WorteEngine(List<String> preferedDbList)
     {
         fsOperator = new FileSystemOperator();
 
-        dict = fsOperator.getAllDictionaries();
+        dict = fsOperator.getDictByDbNames(preferedDbList);
 
-        // Second approach to get DB by name
-        //dict = fsOperator.getDictByDbNames(fsOperator.getDbNamesList());
-
-        if (dict.size() < MIN_DICT_SIZE)
-        {
-            dict = new WorteDefDb().getDefaultDictionary();
-            Log.w(LOG_TAG, "Database is empty, taken default");
-        }
+//        if (dict.size() < MIN_DICT_SIZE)
+//        {
+//            dict = new WorteDefDb().getDefaultDictionary();
+//            Log.w(LOG_TAG, "Database is empty, taken default");
+//        }
 
         dictSize = dict.size();
 
@@ -219,5 +216,10 @@ public class WorteEngine
     public int getCorrectId()
     {
         return currentWorteUnit.getCorrectAnswerId();
+    }
+
+    public int getDictSize()
+    {
+        return this.dictSize;
     }
 }

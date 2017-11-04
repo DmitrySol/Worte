@@ -90,7 +90,10 @@ public class FileSystemOperator
 
             for (File file : dbFiles)
             {
-                dbFilesList.add(file.getName());
+                if(!file.isDirectory() && file.getName().endsWith(".wdb"))
+                {
+                    dbFilesList.add(file.getName());
+                }
             }
         }
     }
