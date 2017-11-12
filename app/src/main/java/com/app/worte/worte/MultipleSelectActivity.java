@@ -1,9 +1,5 @@
 package com.app.worte.worte;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.design.widget.Snackbar;
 import android.content.Context;
 import android.content.Intent;
 import android.support.constraint.ConstraintLayout;
@@ -19,7 +15,7 @@ import android.widget.Button;
 
 import java.util.List;
 
-public class WorteMain extends AppCompatActivity implements View.OnClickListener
+public class MultipleSelectActivity extends AppCompatActivity implements View.OnClickListener
 {
     Context context;
 
@@ -36,14 +32,9 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
     WortePreferences wPref;
     List<String> lastPrefList;
 
-    final static String LOG_TAG = "WorteMain";
+    final static String LOG_TAG = "MultipleSelectActivity";
 
     private final int MIN_DICT_SIZE = 4;
-
-    /**
-     * Id to identify a storage permission request.
-     */
-    private static final int REQUEST_STORAGE_PERMISSIONS = 0;
 
     boolean isAnsweringEnabled;
 
@@ -51,7 +42,7 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_worte_main);
+        setContentView(R.layout.activity_exercise_multiple_select);
 
         context = getApplicationContext();
         btnAsk = (Button) findViewById(R.id.askButton);
@@ -62,8 +53,6 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         btnAnsw4 = (Button) findViewById(R.id.answ4);
 
         mainLayout = (ConstraintLayout)findViewById(R.id.mainLayout);
-
-        ensurePermissions();
 
         btnAsk.setOnClickListener(this);
 
@@ -133,48 +122,6 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_STORAGE_PERMISSIONS: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.i(LOG_TAG, "Storage permissions were granted");
-                } else {
-                    Log.i(LOG_TAG, "Storage permissions were NOT granted");
-                    Log.i(LOG_TAG, "Quit");
-                    this.finish();
-                }
-            }
-        }
-    }
-
-    private void ensurePermissions() {
-        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-            requestStoragePermission();
-        }
-    }
-
-    private void requestStoragePermission() {
-        Log.i(LOG_TAG, "Requesting storage permissions...");
-
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            Log.i(LOG_TAG, "Displaying storage permission explanation.");
-            Snackbar.make(mainLayout, "Worte needs the storage access to read  its databases.",
-                    Snackbar.LENGTH_INDEFINITE)
-                    .setAction("Ok", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            ActivityCompat.requestPermissions(WorteMain.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_STORAGE_PERMISSIONS);
-                        }
-                    })
-                    .show();
-        } else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_STORAGE_PERMISSIONS);
-        }
-    }
-
     private void showWorteProblem(String problem)
     {
         btnAsk.setText(problem);
@@ -223,13 +170,6 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
             case R.id.menu_next:
                 Log.i(LOG_TAG, "Next question is Selected");
                 nextQuestion();
-                return true;
-            case R.id.menu_choosedb:
-                Log.i(LOG_TAG, "Choose Data Base is Selected");
-
-                Intent dbListActivity = new Intent(WorteMain.this, DbListActivity.class);
-                startActivity(dbListActivity);
-
                 return true;
 
             case R.id.menu_quit:

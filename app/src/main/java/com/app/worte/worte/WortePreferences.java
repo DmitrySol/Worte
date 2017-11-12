@@ -2,7 +2,6 @@ package com.app.worte.worte;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.v7.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +10,7 @@ import java.util.List;
 public class WortePreferences
 {
     final String CHOOSEN_DB_KEY = "WDB_KEY";
+    final String LAST_EXERCISE = "LAST_EXERCISE";
 
     private Context appCtx;
     private SharedPreferences sPref;
@@ -42,5 +42,20 @@ public class WortePreferences
         }
 
         return chosenDbNamesList;
+    }
+
+    public void saveLastActiveExercise(String exerciseName)
+    {
+        sPref = appCtx.getSharedPreferences(LAST_EXERCISE, Context.MODE_PRIVATE);
+
+        SharedPreferences.Editor ed = sPref.edit();
+        ed.putString(LAST_EXERCISE, exerciseName);
+        ed.commit();
+    }
+
+    public String getLastActiveExercise()
+    {
+        sPref = appCtx.getSharedPreferences(LAST_EXERCISE, Context.MODE_PRIVATE);
+        return sPref.getString(LAST_EXERCISE, null);
     }
 }

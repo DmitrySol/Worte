@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <item android:title="Exercise">
+        <menu>
+            <item
+                android:id="@+id/nav_multiple_select"
+                android:icon="@drawable/ic_action_multiple_select"
+                android:title="Multiple select" />
+            <item
+                android:id="@+id/nav_cards"
+                android:icon="@drawable/ic_action_cards"
+                android:title="Cards" />
+        </menu>
+    </item>
+
+    <item android:title="Settings">
+        <menu>
+            <item
+                android:id="@+id/nav_share"
+                android:icon="@drawable/ic_menu_databases"
+                android:title="Databases" />
+        </menu>
+    </item>
+
+</menu>

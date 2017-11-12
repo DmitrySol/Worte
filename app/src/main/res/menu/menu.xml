@@ -8,9 +8,6 @@
     <item android:id="@+id/menu_next"
         android:title="--&gt;  Forward" />
 
-    <item android:id="@+id/menu_choosedb"
-        android:title="Choose Databases" />
-
     <item android:id="@+id/menu_quit"
         android:title="Quit" />
 </menu>

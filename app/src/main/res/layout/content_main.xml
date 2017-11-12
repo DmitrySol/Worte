@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.app.worte.worte.MainActivity"
+    tools:showIn="@layout/app_bar_main">
+
+
+    <GridLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:rowCount="1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="0dp">
+
+        <Button
+            android:id="@+id/button_MultipleSelect"
+            android:layout_column="0"
+            android:layout_row="0"
+            android:drawableTop="@drawable/ic_action_multiple_select"
+            android:text="Multiple\nSelect" />
+
+        <Button
+            android:id="@+id/button_CardsSelect"
+            android:layout_column="1"
+            android:layout_row="0"
+            android:drawableTop="@drawable/ic_action_cards"
+            android:text="Cards\n" />
+    </GridLayout>
+
+</android.support.constraint.ConstraintLayout>
