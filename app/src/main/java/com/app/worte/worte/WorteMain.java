@@ -134,6 +134,13 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
     }
 
     @Override
+    public void onPause()
+    {
+        super.onPause();
+        wEngine.saveCurrentWdb();
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case REQUEST_STORAGE_PERMISSIONS: {
@@ -279,7 +286,7 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
                         checkAnswer(WorteTypeId.ANS_4);
                         break;
                     default:
-                        Log.w(LOG_TAG, "Inknown button selected!");
+                        Log.w(LOG_TAG, "Unknown button selected!");
                         break;
                 }
             }

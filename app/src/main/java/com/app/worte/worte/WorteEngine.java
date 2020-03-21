@@ -113,7 +113,7 @@ public class WorteEngine
     private boolean isQuestionGenerated = false;
 
     private FileSystemOperator fsOperator;
-    private List<Pair<String, String>> dict;
+    private List<WdbEntry> dict;
     private int dictSize;
 
     private List<WorteUnit> worteUnitList;
@@ -199,7 +199,7 @@ public class WorteEngine
 
         for(int index: occupiedIndexes)
         {
-            occupiedAnswers.add(dict.get(index).second);
+            occupiedAnswers.add(dict.get(index).translation);
         }
 
         Random r = new Random(System.currentTimeMillis());
@@ -212,14 +212,14 @@ public class WorteEngine
             int leftInd = preAnswer - i;
 
             if((rightInd < dictSize) && (!occupiedIndexes.contains(rightInd)) &&
-                    (!occupiedAnswers.contains(dict.get(rightInd).second)))
+                    (!occupiedAnswers.contains(dict.get(rightInd).translation)))
             {
                 answerId = rightInd;
                 isFoundPropperIndex = true;
                 break;
             }
             if((leftInd >= 0) && (!occupiedIndexes.contains(leftInd)) &&
-                    (!occupiedAnswers.contains(dict.get(leftInd).second)))
+                    (!occupiedAnswers.contains(dict.get(leftInd).translation)))
             {
                 answerId = leftInd;
                 isFoundPropperIndex = true;
@@ -246,7 +246,7 @@ public class WorteEngine
 
         int ackInd = generateAskIndex();
 
-        tempWorteUnit.setUnitById(dict.get(ackInd).first, WorteTypeId.QUESTION);
+        tempWorteUnit.setUnitById(dict.get(ackInd).original, WorteTypeId.QUESTION);
         tempWorteUnit.setCorrectAnswerId(r.nextInt(WorteTypeId.ANS_4) + 1);
 
         Vector<Integer> occupiedIndexes = new Vector<Integer>();
@@ -256,13 +256,13 @@ public class WorteEngine
         {
             if(i == tempWorteUnit.getCorrectAnswerId())
             {
-                tempWorteUnit.setUnitById(dict.get(ackInd).second, i);
+                tempWorteUnit.setUnitById(dict.get(ackInd).translation, i);
             }
             else
             {
                 int curWrongAnswerId = generateWrongAnswerId(occupiedIndexes);
                 occupiedIndexes.add(curWrongAnswerId);
-                tempWorteUnit.setUnitById(dict.get(curWrongAnswerId).second, i);
+                tempWorteUnit.setUnitById(dict.get(curWrongAnswerId).translation, i);
             }
         }
 
@@ -320,5 +320,11 @@ public class WorteEngine
     public int getDictSize()
     {
         return this.dictSize;
+    }
+
+    public void saveCurrentWdb()
+    {
+        Log.i(LOG_TAG, "Updating current WDBs");
+        fsOperator.updateWdbFilesFromDict(dict);
     }
 }

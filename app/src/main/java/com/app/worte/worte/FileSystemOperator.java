@@ -1,33 +1,40 @@
 package com.app.worte.worte;
 
 import android.os.Environment;
-import android.support.v4.util.Pair;
 import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class FileSystemOperator
 {
     private List<String> dbFilesList;
-    private List<Pair<String, String>> finalDict;
+    private List<WdbEntry> finalDict;
 
     private static final String LOG_TAG = "FileSystemOperator";
     private static final String WORTE_FOLDER = "/WorteDb";
+
+    private String dbDirName;
 
     private File[] dbFiles;
     private File worteDbFolder;
 
     private void parseDbFile(File dbFile)
     {
-        Log.i(LOG_TAG, "Parsing DB file: " + dbFile.getName());
+        String fileName = dbFile.getName();
+        Log.i(LOG_TAG, "Parsing DB file: " + fileName);
 
         try
         {
@@ -37,14 +44,16 @@ public class FileSystemOperator
             String line = reader.readLine();
             while (line != null)
             {
-                String[] splited = line.split(" - ");
+                String[] splited = line.split(" \\| ");
 
-                if(splited.length == 2)
+                if(splited.length == 3)
                 {
                     String newLanguage = splited[0];
-                    String nativeLanguage = splited[1];
+                    Log.w(LOG_TAG, "newLanguage: " + newLanguage);
+                    String origLanguage = splited[1];
+                    int knowledge = Integer.parseInt(splited[2]);
 
-                    finalDict.add(Pair.create(newLanguage, nativeLanguage));
+                    finalDict.add(new WdbEntry(newLanguage, origLanguage, knowledge, fileName));
                 }
                 else
                 {
@@ -68,9 +77,9 @@ public class FileSystemOperator
     public FileSystemOperator()
     {
         dbFilesList = new ArrayList<>();
-        finalDict = new ArrayList<Pair<String, String>>();
+        finalDict = new ArrayList<WdbEntry>();
 
-        String dbDirName = Environment.getExternalStorageDirectory().toString() + WORTE_FOLDER;
+        dbDirName = Environment.getExternalStorageDirectory().toString() + WORTE_FOLDER;
         Log.i(LOG_TAG, "DB path " + dbDirName);
 
         worteDbFolder = new File(dbDirName);
@@ -105,7 +114,7 @@ public class FileSystemOperator
         return dbFilesList;
     }
 
-    public List<Pair<String, String>> getDictByDbNames(List<String> dbNames)
+    public List<WdbEntry> getDictByDbNames(List<String> dbNames)
     {
         finalDict.clear();
 
@@ -121,7 +130,47 @@ public class FileSystemOperator
         return finalDict;
     }
 
-    public List<Pair<String, String>> getAllDictionaries()
+    public void updateWdbFilesFromDict(List<WdbEntry> dict)
+    {
+        Map<String, List<String>> fileContentDict = new HashMap<String, List<String>>();
+
+        for(WdbEntry wdbEntry : dict)
+        {
+            if(!fileContentDict.containsKey(wdbEntry.fileName))
+            {
+                fileContentDict.put(wdbEntry.fileName, new ArrayList<String>());
+            }
+            List<String> wdbLines = fileContentDict.get(wdbEntry.fileName);
+
+            String curLine = wdbEntry.original + " | " + wdbEntry.translation + " | " + wdbEntry.knowledge;
+            wdbLines.add(curLine);
+        }
+
+        Set<String> fileNames = fileContentDict.keySet();
+
+        for(String fileName : fileNames)
+        {
+            try
+            {
+                File outputWdbFile = new File(dbDirName, fileName);
+                FileOutputStream fileOutputStream = new FileOutputStream(outputWdbFile);
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream);
+
+                for(String wdbLine : fileContentDict.get(fileName))
+                {
+                    outputStreamWriter.write(wdbLine + "\n");
+                }
+                Log.i(LOG_TAG, "Updated knowledge for file: " + fileName);
+                outputStreamWriter.close();
+            }
+            catch (IOException e)
+            {
+                Log.e(LOG_TAG, "File write failed: " + e.toString());
+            }
+        }
+    }
+
+    public List<WdbEntry> getAllDictionaries()
     {
         for (File file : dbFiles)
         {
