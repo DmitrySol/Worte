@@ -83,7 +83,7 @@ public class DbListActivity extends AppCompatActivity
             if ((chosenDbNamesList != null) && (chosenDbNamesList.contains(currentDbName)))
             {
                 isDbChoosen = true;
-                Log.i(LOG_TAG, "DB: " + currentDbName + " is choosen");
+                Log.i(LOG_TAG, "DB: " + currentDbName + " is chosen");
             }
 
             rawStatuses.add(new RawStatus(i, isDbChoosen, currentDbName));

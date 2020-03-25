@@ -1,6 +1,5 @@
 package com.app.worte.worte;
 
-import android.support.v4.util.Pair;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -31,6 +30,8 @@ class WorteUnit
 
     private int correscAnswerId;
 
+    public int questionIdInDict;
+
     WorteUnit()
     {
         question = "";
@@ -40,6 +41,7 @@ class WorteUnit
         answer4 = "";
 
         correscAnswerId = 1;
+        questionIdInDict = 0;
     }
 
     public void setUnitById(String unit, int typeId)
@@ -116,79 +118,125 @@ public class WorteEngine
     private List<WdbEntry> dict;
     private int dictSize;
 
+    private List<Integer> dictSortedIndexes;
+    private List<Integer> indexesToBeShownInCurrentCycle;
+
     private List<WorteUnit> worteUnitList;
     private WorteUnit currentWorteUnit;
 
     private int currentWorteUnitId;
 
     private Boolean[] isShown;
-    private int shownNum;
+
+    public final static int MIN_PROGRESS = -5;
+    public final static int MAX_PROGRESS = 5;
+
+    private final static int WORTE_PER_CYCLE_DEF = 12;
+    private int wortePerCycle;
+
+    private final static int NUM_OF_ADDITIONAL_RANDOM_WORDS = 3;
 
     public WorteEngine(List<String> preferedDbList)
     {
         fsOperator = new FileSystemOperator();
 
         dict = fsOperator.getDictByDbNames(preferedDbList);
-
         dictSize = dict.size();
+
+        wortePerCycle = dictSize > WORTE_PER_CYCLE_DEF ? WORTE_PER_CYCLE_DEF : dictSize;
+
+        dictSortedIndexes = new ArrayList<Integer>(dictSize);
+        indexesToBeShownInCurrentCycle = new ArrayList<Integer>();
 
         worteUnitList = new ArrayList<WorteUnit>();
         currentWorteUnit = new WorteUnit();
         currentWorteUnitId = -1;
 
-        shownNum = 0;
         isShown = new Boolean[dictSize];
         Arrays.fill(isShown, Boolean.FALSE);
 
         Log.i(LOG_TAG, "Size of received dict = " + String.valueOf(dictSize));
+
+        initSortedIndexesList();
+    }
+
+    private void initSortedIndexesList()
+    {
+        Boolean[] isPicked = new Boolean[dictSize];
+        Arrays.fill(isPicked, Boolean.FALSE);
+
+        for(int i = 0; i < dictSize; i++)
+        {
+            int minKnowlege = MAX_PROGRESS + 1;
+            int indexOfMinKnowlege = -1;
+
+            for(int j = 0; j < dictSize; j++)
+            {
+                if((isPicked[j] == false) && (dict.get(j).knowledge < minKnowlege))
+                {
+                    minKnowlege = dict.get(j).knowledge;
+                    indexOfMinKnowlege = j;
+                }
+            }
+            isPicked[indexOfMinKnowlege] = true;
+            dictSortedIndexes.add(indexOfMinKnowlege);
+        }
+    }
+
+    private void fillArayOfIndexesForCurrentCycle()
+    {
+        Log.i(LOG_TAG, "New Cycle has been started!");
+        for(int i = 0; i < wortePerCycle; i++)
+        {
+            indexesToBeShownInCurrentCycle.add(dictSortedIndexes.get(0));
+            dictSortedIndexes.remove(0);
+        }
+
+        if((wortePerCycle + NUM_OF_ADDITIONAL_RANDOM_WORDS) < dictSize)
+        {
+            for(int i = 0; i < NUM_OF_ADDITIONAL_RANDOM_WORDS; i++)
+            {
+                Random r = new Random(System.currentTimeMillis());
+                int randomIndex = r.nextInt(dictSortedIndexes.size());
+
+                indexesToBeShownInCurrentCycle.add(dictSortedIndexes.get(randomIndex));
+                dictSortedIndexes.remove(randomIndex);
+            }
+        }
     }
 
     private int generateAskIndex()
     {
-        int askIndex = 0;
-
-        if(shownNum == dictSize)
+        if(indexesToBeShownInCurrentCycle.isEmpty())
         {
-            Arrays.fill(isShown, Boolean.FALSE);
-            shownNum = 0;
+            fillArayOfIndexesForCurrentCycle();
         }
 
         Random r = new Random(System.currentTimeMillis());
+        int randomIndex = r.nextInt(indexesToBeShownInCurrentCycle.size());
+        int generatedAskIndex = indexesToBeShownInCurrentCycle.get(randomIndex);
+        indexesToBeShownInCurrentCycle.remove(randomIndex);
 
-        int preAskInd = r.nextInt(dictSize);
+        return generatedAskIndex;
+    }
 
-        boolean isFoundFreeSpace = false;
-
-        for(int i = 0; i < dictSize; i++)
+    private void updateSortedIndexesArray()
+    {
+        int i;
+        boolean isElementShallBeInTheEnd = true;
+        for(i = 0; i < dictSortedIndexes.size(); i++)
         {
-            int rightInd = preAskInd + i;
-            int leftInd = preAskInd - i;
-
-            if((rightInd < dictSize) && (isShown[rightInd] == false))
+            if(dict.get(currentWorteUnit.questionIdInDict).knowledge < dict.get(dictSortedIndexes.get(i)).knowledge)
             {
-                askIndex = rightInd;
-                isFoundFreeSpace = true;
-                break;
-            }
-
-            if((leftInd >= 0) && (isShown[leftInd] == false))
-            {
-                askIndex = leftInd;
-                isFoundFreeSpace = true;
+                dictSortedIndexes.add(i, currentWorteUnit.questionIdInDict);
+                isElementShallBeInTheEnd = false;
                 break;
             }
         }
-
-        if(isFoundFreeSpace == false)
+        if(true == isElementShallBeInTheEnd)
         {
-            Log.e(LOG_TAG, "Something went wrong!");
-            askIndex = preAskInd;
+            dictSortedIndexes.add(currentWorteUnit.questionIdInDict);
         }
-
-        isShown[askIndex] = true;
-        ++shownNum;
-
-        return askIndex;
     }
 
     private int generateWrongAnswerId(Vector<Integer> occupiedIndexes)
@@ -241,22 +289,21 @@ public class WorteEngine
         isQuestionGenerated = true;
 
         WorteUnit tempWorteUnit = new WorteUnit();
-
         Random r = new Random(System.currentTimeMillis());
 
-        int ackInd = generateAskIndex();
+        tempWorteUnit.questionIdInDict = generateAskIndex();
 
-        tempWorteUnit.setUnitById(dict.get(ackInd).original, WorteTypeId.QUESTION);
+        tempWorteUnit.setUnitById(dict.get(tempWorteUnit.questionIdInDict).original, WorteTypeId.QUESTION);
         tempWorteUnit.setCorrectAnswerId(r.nextInt(WorteTypeId.ANS_4) + 1);
 
         Vector<Integer> occupiedIndexes = new Vector<Integer>();
-        occupiedIndexes.add(ackInd);
+        occupiedIndexes.add(tempWorteUnit.questionIdInDict);
 
         for(int i = WorteTypeId.ANS_1; i <= WorteTypeId.ANS_4; i++)
         {
             if(i == tempWorteUnit.getCorrectAnswerId())
             {
-                tempWorteUnit.setUnitById(dict.get(ackInd).translation, i);
+                tempWorteUnit.setUnitById(dict.get(tempWorteUnit.questionIdInDict).translation, i);
             }
             else
             {
@@ -282,6 +329,7 @@ public class WorteEngine
         }
         else if(currentWorteUnitId < (worteUnitSize - 1))
         {
+            /* Taking the Worte unit from the history, when "Forward" item has been called */
             currentWorteUnit = worteUnitList.get(++currentWorteUnitId);
         }
         else
@@ -326,5 +374,64 @@ public class WorteEngine
     {
         Log.i(LOG_TAG, "Updating current WDBs");
         fsOperator.updateWdbFilesFromDict(dict);
+    }
+
+    public void reportCorrectAnswer()
+    {
+        dict.get(currentWorteUnit.questionIdInDict).knowledge += 1;
+
+        if(dict.get(currentWorteUnit.questionIdInDict).knowledge > MAX_PROGRESS)
+        {
+            dict.get(currentWorteUnit.questionIdInDict).knowledge = MAX_PROGRESS;
+        }
+        updateSortedIndexesArray();
+    }
+
+    public void reportWrongAnswer()
+    {
+        dict.get(currentWorteUnit.questionIdInDict).knowledge -= 2;
+
+        if(dict.get(currentWorteUnit.questionIdInDict).knowledge < MIN_PROGRESS)
+        {
+            dict.get(currentWorteUnit.questionIdInDict).knowledge = MIN_PROGRESS;
+        }
+        updateSortedIndexesArray();
+    }
+
+    public int getCurrentKnowledge()
+    {
+        return  dict.get(currentWorteUnit.questionIdInDict).knowledge;
+    }
+
+    public String getLanguageToTranslateFrom()
+    {
+        String languageToLearn;
+        String[] parsedFileName = dict.get(currentWorteUnit.questionIdInDict).fileName.split("_");
+        if(parsedFileName.length > 2)
+        {
+            languageToLearn = parsedFileName[0];
+        }
+        else
+        {
+            languageToLearn = "";
+        }
+
+        return languageToLearn;
+    }
+
+    public String getLanguageTranslateTo()
+    {
+        String nativeLanguage;
+        String[] parsedFileName = dict.get(currentWorteUnit.questionIdInDict).fileName.split("_");
+        if(parsedFileName.length > 2)
+        {
+            nativeLanguage = parsedFileName[1];
+        }
+        else
+        {
+            nativeLanguage = "";
+        }
+
+        return nativeLanguage;
     }
 }

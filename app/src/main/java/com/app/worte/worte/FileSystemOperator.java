@@ -49,7 +49,6 @@ public class FileSystemOperator
                 if(splited.length == 3)
                 {
                     String newLanguage = splited[0];
-                    Log.w(LOG_TAG, "newLanguage: " + newLanguage);
                     String origLanguage = splited[1];
                     int knowledge = Integer.parseInt(splited[2]);
 
@@ -160,7 +159,6 @@ public class FileSystemOperator
                 {
                     outputStreamWriter.write(wdbLine + "\n");
                 }
-                Log.i(LOG_TAG, "Updated knowledge for file: " + fileName);
                 outputStreamWriter.close();
             }
             catch (IOException e)

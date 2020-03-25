@@ -1,7 +1,10 @@
 package com.app.worte.worte;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.support.v4.app.ActivityCompat;
 import android.support.design.widget.Snackbar;
 import android.content.Context;
@@ -16,12 +19,15 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import java.util.List;
 
 public class WorteMain extends AppCompatActivity implements View.OnClickListener
 {
     Context context;
+    Resources resources;
 
     WorteEngine wEngine;
     Button btnAsk;
@@ -31,6 +37,8 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
     Button btnAnsw3;
     Button btnAnsw4;
 
+    ProgressBar knowlegeBar;
+
     ConstraintLayout mainLayout;
 
     WortePreferences wPref;
@@ -38,7 +46,10 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
 
     final static String LOG_TAG = "WorteMain";
 
-    private final int MIN_DICT_SIZE = 4;
+    private final static int MIN_DICT_SIZE = 4;
+
+    private final static int BAD_PROGRESS_TH = -3;
+    private final static int GOOD_PROGRESS_TH = 3;
 
     /**
      * Id to identify a storage permission request.
@@ -54,12 +65,16 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         setContentView(R.layout.activity_worte_main);
 
         context = getApplicationContext();
+        resources = context.getResources();
+
         btnAsk = (Button) findViewById(R.id.askButton);
 
         btnAnsw1 = (Button) findViewById(R.id.answ1);
         btnAnsw2 = (Button) findViewById(R.id.answ2);
         btnAnsw3 = (Button) findViewById(R.id.answ3);
         btnAnsw4 = (Button) findViewById(R.id.answ4);
+
+        knowlegeBar = (ProgressBar)findViewById(R.id.progress);
 
         mainLayout = (ConstraintLayout)findViewById(R.id.mainLayout);
 
@@ -74,29 +89,6 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         mainLayout.setOnClickListener(this);
 
         wPref = new WortePreferences(context);
-        lastPrefList = wPref.getChoosenDbList();
-
-        if(lastPrefList != null)
-        {
-            wEngine = new WorteEngine(lastPrefList);
-
-            if(wEngine.getDictSize() == 0)
-            {
-                showWorteProblem("DB is Empty!");
-            }
-            else if(wEngine.getDictSize() < MIN_DICT_SIZE)
-            {
-                showWorteProblem("DB is too small to show!");
-            }
-            else
-            {
-                nextQuestion();
-            }
-        }
-        else
-        {
-            showWorteProblem("No DB selected!");
-        }
     }
 
     @Override
@@ -190,6 +182,8 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         btnAnsw3.setText("-");
         btnAnsw4.setText("-");
 
+        updateProgressBar(0);
+
         btnAsk.setEnabled(false);
         btnAnsw1.setEnabled(false);
         btnAnsw2.setEnabled(false);
@@ -255,6 +249,7 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         if(v.getId() == R.id.askButton)
         {
             Log.i(LOG_TAG, "Ask Button clicked");
+            runGoogleTranslateApp();
         }
         else
         {
@@ -332,6 +327,7 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
                 Button correctBtn = getButtonByAnswerID(answId);
                 correctBtn.setBackground(ContextCompat.getDrawable(context, R.drawable.answ_btn_correct));
                 btnAsk.setBackground(ContextCompat.getDrawable(context, R.drawable.ask_btn_correct));
+                wEngine.reportCorrectAnswer();
             }
             else
             {
@@ -340,7 +336,10 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
 
                 wrongBtn.setBackground(ContextCompat.getDrawable(context, R.drawable.answ_btn_wrong));
                 correctBtn.setBackground(ContextCompat.getDrawable(context, R.drawable.answ_btn_correct));
+                wEngine.reportWrongAnswer();
             }
+            updateProgressBar(wEngine.getCurrentKnowledge());
+
             isAnsweringEnabled = false;
         }
     }
@@ -375,5 +374,72 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         btnAnsw2.setText(wEngine.getWorte(WorteTypeId.ANS_2));
         btnAnsw3.setText(wEngine.getWorte(WorteTypeId.ANS_3));
         btnAnsw4.setText(wEngine.getWorte(WorteTypeId.ANS_4));
+
+        updateProgressBar(wEngine.getCurrentKnowledge());
+    }
+
+    private void updateProgressBar(int progress)
+    {
+        float finalProgress;
+
+        if (progress < WorteEngine.MIN_PROGRESS)
+        {
+            finalProgress = WorteEngine.MIN_PROGRESS;
+        }
+        else if (progress > WorteEngine.MAX_PROGRESS)
+        {
+            finalProgress = WorteEngine.MAX_PROGRESS;
+        }
+        else
+        {
+            finalProgress = progress;
+        }
+
+        if (finalProgress < BAD_PROGRESS_TH)
+        {
+            knowlegeBar.setProgressTintList(resources.getColorStateList(R.color.badProgress, context.getTheme()));
+        }
+        else if(finalProgress > GOOD_PROGRESS_TH)
+        {
+            knowlegeBar.setProgressTintList(resources.getColorStateList(R.color.goodProgress, context.getTheme()));
+        }
+        else
+        {
+            knowlegeBar.setProgressTintList(resources.getColorStateList(R.color.averageProgress, context.getTheme()));
+        }
+
+        int adaptedProgress = (int)(((finalProgress - WorteEngine.MIN_PROGRESS) /
+                (WorteEngine.MAX_PROGRESS - WorteEngine.MIN_PROGRESS)) * 100);
+
+        Log.i(LOG_TAG, "New knowlege progress: " + finalProgress);
+
+        knowlegeBar.setProgress(adaptedProgress);
+    }
+
+    private void runGoogleTranslateApp()
+    {
+        try
+        {
+            Intent intent = new Intent();
+            intent.setAction(Intent.ACTION_SEND);
+            Log.i(LOG_TAG, "Sending Intent to open Google translate for word: " + wEngine.getWorte(WorteTypeId.QUESTION) +
+                    ", from: " +  wEngine.getLanguageToTranslateFrom() +
+                    ", to: " + wEngine.getLanguageTranslateTo());
+            intent.putExtra(Intent.EXTRA_TEXT, wEngine.getWorte(WorteTypeId.QUESTION));
+            intent.putExtra("key_text_input", wEngine.getWorte(WorteTypeId.QUESTION));
+            intent.putExtra("key_text_output", "");
+            intent.putExtra("key_language_from", wEngine.getLanguageToTranslateFrom());
+            intent.putExtra("key_language_to", wEngine.getLanguageTranslateTo());
+            intent.putExtra("key_suggest_translation", "");
+            intent.putExtra("key_from_floating_window", false);
+            intent.setComponent(new ComponentName("com.google.android.apps.translate",
+                    "com.google.android.apps.translate.TranslateActivity"));
+            startActivity(intent);
+        }
+        catch (ActivityNotFoundException e)
+        {
+            Toast.makeText(getApplication(), "No Google Translation Installed",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 }
