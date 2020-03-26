@@ -7,4 +7,7 @@
     <color name="askBtnBg">#0ae9f9</color>
     <color name="answBtnBg">#4796cb</color>
     <color name="bgGrey">#b3b0b9</color>
+    <color name="badProgress">#c40000</color>
+    <color name="goodProgress">#5FBA22</color>
+    <color name="averageProgress">#EEBF05</color>
 </resources>
