@@ -26,6 +26,8 @@ public class FileSystemOperator
     private static final String LOG_TAG = "FileSystemOperator";
     private static final String WORTE_FOLDER = "/WorteDb";
 
+    private static final int FIELDS_NUM_IN_WDB_FILE = 3;
+
     private String dbDirName;
 
     private File[] dbFiles;
@@ -46,11 +48,21 @@ public class FileSystemOperator
             {
                 String[] splited = line.split(" \\| ");
 
-                if(splited.length == 3)
+                if(splited.length == FIELDS_NUM_IN_WDB_FILE)
                 {
                     String newLanguage = splited[0];
                     String origLanguage = splited[1];
-                    int knowledge = Integer.parseInt(splited[2]);
+
+                    int knowledge = 0;
+
+                    try
+                    {
+                        knowledge = Integer.parseInt(splited[2]);
+                    }
+                    catch (NumberFormatException e)
+                    {
+                        Log.e(LOG_TAG, "Unable to parse the WDB knowledge: " + splited[2]);
+                    }
 
                     finalDict.add(new WdbEntry(newLanguage, origLanguage, knowledge, fileName));
                 }

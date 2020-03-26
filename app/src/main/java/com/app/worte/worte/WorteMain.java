@@ -37,7 +37,7 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
     Button btnAnsw3;
     Button btnAnsw4;
 
-    ProgressBar knowlegeBar;
+    ProgressBar knowledgeBar;
 
     ConstraintLayout mainLayout;
 
@@ -74,7 +74,7 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
         btnAnsw3 = (Button) findViewById(R.id.answ3);
         btnAnsw4 = (Button) findViewById(R.id.answ4);
 
-        knowlegeBar = (ProgressBar)findViewById(R.id.progress);
+        knowledgeBar = (ProgressBar)findViewById(R.id.progress);
 
         mainLayout = (ConstraintLayout)findViewById(R.id.mainLayout);
 
@@ -397,15 +397,15 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
 
         if (finalProgress < BAD_PROGRESS_TH)
         {
-            knowlegeBar.setProgressTintList(resources.getColorStateList(R.color.badProgress, context.getTheme()));
+            knowledgeBar.setProgressTintList(resources.getColorStateList(R.color.badProgress, context.getTheme()));
         }
         else if(finalProgress > GOOD_PROGRESS_TH)
         {
-            knowlegeBar.setProgressTintList(resources.getColorStateList(R.color.goodProgress, context.getTheme()));
+            knowledgeBar.setProgressTintList(resources.getColorStateList(R.color.goodProgress, context.getTheme()));
         }
         else
         {
-            knowlegeBar.setProgressTintList(resources.getColorStateList(R.color.averageProgress, context.getTheme()));
+            knowledgeBar.setProgressTintList(resources.getColorStateList(R.color.averageProgress, context.getTheme()));
         }
 
         int adaptedProgress = (int)(((finalProgress - WorteEngine.MIN_PROGRESS) /
@@ -413,7 +413,7 @@ public class WorteMain extends AppCompatActivity implements View.OnClickListener
 
         Log.i(LOG_TAG, "New knowlege progress: " + finalProgress);
 
-        knowlegeBar.setProgress(adaptedProgress);
+        knowledgeBar.setProgress(adaptedProgress);
     }
 
     private void runGoogleTranslateApp()

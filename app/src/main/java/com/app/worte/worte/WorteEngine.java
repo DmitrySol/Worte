@@ -128,6 +128,9 @@ public class WorteEngine
 
     private Boolean[] isShown;
 
+    public final static int CORRECT_ANSWER_KNOWLEDGE_ADDITION = 1;
+    public final static int WRONG_ANSWER_KNOWLEDGE_ADDITION = -2;
+
     public final static int MIN_PROGRESS = -5;
     public final static int MAX_PROGRESS = 5;
 
@@ -378,7 +381,7 @@ public class WorteEngine
 
     public void reportCorrectAnswer()
     {
-        dict.get(currentWorteUnit.questionIdInDict).knowledge += 1;
+        dict.get(currentWorteUnit.questionIdInDict).knowledge += CORRECT_ANSWER_KNOWLEDGE_ADDITION;
 
         if(dict.get(currentWorteUnit.questionIdInDict).knowledge > MAX_PROGRESS)
         {
@@ -389,7 +392,7 @@ public class WorteEngine
 
     public void reportWrongAnswer()
     {
-        dict.get(currentWorteUnit.questionIdInDict).knowledge -= 2;
+        dict.get(currentWorteUnit.questionIdInDict).knowledge += WRONG_ANSWER_KNOWLEDGE_ADDITION;
 
         if(dict.get(currentWorteUnit.questionIdInDict).knowledge < MIN_PROGRESS)
         {
